@@ -14,7 +14,7 @@
 #include "BPlusTree.hpp"
 #include "DateAndTime.h"
 #include "Vector.h"
-
+#include "InternalData.h"
 using namespace myAlgorithm;
 
 namespace Kernel {
@@ -140,6 +140,7 @@ private:
     float t_price[60][5];
     short t_stationNum;
     short t_ticketKind;
+    short t_ticketName[5];
     short t_catalog;
     bool t_onSale;
 public:
@@ -154,6 +155,8 @@ public:
             for (short j = 0; j < t_ticketKind; ++j)
                 t_price[i][j] = tr.t_price[i][j];
         }
+        for (short j = 0; j < t_ticketKind; ++j)
+            t_ticketName[j] = tr.t_ticketName[j];
     }
 
     String M_id() const {
@@ -258,7 +261,30 @@ BPlusTree<Pair<int, int>, Pair<int, int>> userTicketTree(false, "userTicket.dat"
 BPlusTree<String, train> trainTree(false, "train.dat");
 
 namespace Kernel {
+    inline short trainStation2Short(const myAlgorithm::String& station){
+        //TODO : Hash
+        return 1;
+    }
+
+    inline myAlgorithm::String short2trainStation(const short& idx){
+        return InternalData::InternalStation[idx];
+    }
+
+    inline short trainTicketKind2Short(const myAlgorithm::String& tkd){
+
+        return 1;
+    }
+
+    inline myAlgorithm::String short2trainTicketKind(const short& idx){
+
+        return "";
+    }
+
     void _init(){
+        if (access("id.dat", 0) == -1){
+            FILE *tmpfp = fopen("id.dat", "wb+");
+            fclose(tmpfp);
+        }
         FILE *fp;
         fp = fopen("id.dat", "rw+");
         fscanf(fp, "%d%d", &nowId, &ticketId);
@@ -269,6 +295,13 @@ namespace Kernel {
         FILE *fp = fopen("id.dat", "w+");
         fprintf(fp, "%d\n%d\n", nowId, ticketId);
         fclose(fp);
+#ifdef _NO_DEBUG
+        userIdTree.closeFile();
+        ticketTree.closeFile();
+        ticketIdTree.closeFile();
+        userTicketTree.closeFile();
+        trainTree.closeFile();
+#endif
     }
 
     class Interface {
@@ -338,13 +371,15 @@ namespace Kernel {
             return Success;
         }
 
-        Status I_addTrain(const String &t_id, const String &t_name, int t_catalog, short t_sNum, short t_tKind){
+        Status I_addTrain(const String &t_id, const String &t_name, int t_catalog, short t_sNum, short t_tKind, short *t_tname){
             train newTrain;
             newTrain.t_id = t_id;
             newTrain.t_name = t_name;
             newTrain.t_catalog = t_catalog;
             newTrain.t_ticketKind = t_tKind;
             newTrain.t_onSale = false;
+            for (short i = 0; i < t_tKind; ++i)
+                newTrain.t_ticketName[i] = t_tname[i];
             trainTree.insert(t_id, newTrain);
             return Success;
         }
