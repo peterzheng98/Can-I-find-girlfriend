@@ -9,4 +9,4 @@ touch ticketId.dat
 touch ticket.dat 
 touch id.dat 
 cd ..
-g++ main.cpp -o code -g -w -O2 -std=c++14
+g++ commandMain.cpp -o code -g -w -O2 -std=c++14
