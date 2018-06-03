@@ -985,7 +985,7 @@ public:
     }
 
     void update(const Key &key, const Val &value){
-        off_t pos = findKey(key);
+        off_t pos = findKey(key, true);
         if (pos == 0)
             return;
         LeafNode ln;
@@ -993,11 +993,13 @@ public:
         int l = 0, r = ln.size - 1, mid;
         while (l < r){
             mid = (l + r) >> 1;
-            if (comp(key, ln.record[mid].key))
+            if (comp(ln.record[mid].key, key))
                 l = mid + 1;
             else
                 r = mid;
         }
+        if (comp(ln.record[l].key, key) || comp(key, ln.record[l].key))
+            return;
         ln.record[l].value = value;
         write(&ln, pos);
     }
