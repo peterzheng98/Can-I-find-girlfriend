@@ -267,7 +267,8 @@ namespace Kernel {
     }
 
     inline myAlgorithm::String short2trainStation(const short& idx){
-        return InternalData::InternalStation[idx];
+        //return InternalData::InternalStation[idx];
+        return "";
     }
 
     inline short trainTicketKind2Short(const myAlgorithm::String& tkd){
