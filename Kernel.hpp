@@ -250,23 +250,23 @@ static int nowId = 2018;
 static int ticketId = 1;
 static Date startDate(2018, 6, 1), endDate(2018, 6, 30);
 
-BPlusTree<int, user> userIdTree(false, "tmp/user.dat");
-//BPlusTree<String, int> userNameTree(true, "tmp/userName.dat");
-BPlusTree<ticketKey, ticket> ticketTree(false, "tmp/ticket.dat");
-BPlusTree<int, ticket> ticketIdTree(false, "tmp/ticketId.dat");
-BPlusTree<Pair<int, int>, Pair<int, int>> userTicketTree(false, "tmp/userTicket.dat");
-BPlusTree<String, train> trainTree(false, "tmp/train.dat");
+BPlusTree<int, user> userIdTree(false, "user.dat");
+//BPlusTree<String, int> userNameTree(true, "userName.dat");
+BPlusTree<ticketKey, ticket> ticketTree(false, "ticket.dat");
+BPlusTree<int, ticket> ticketIdTree(false, "ticketId.dat");
+BPlusTree<Pair<int, int>, Pair<int, int>> userTicketTree(false, "userTicket.dat");
+BPlusTree<String, train> trainTree(false, "train.dat");
 
 namespace Kernel {
     void _init(){
         FILE *fp;
-        fp = fopen("tmp/id.dat", "rw+");
+        fp = fopen("id.dat", "rw+");
         fscanf(fp, "%d%d", &nowId, &ticketId);
         fclose(fp);
     }
 
     void _exit(){
-        FILE *fp = fopen("tmp/id.dat", "w+");
+        FILE *fp = fopen("id.dat", "w+");
         fprintf(fp, "%d\n%d\n", nowId, ticketId);
         fclose(fp);
     }
@@ -606,7 +606,7 @@ namespace Kernel {
             ticketIdTree.clear();
             userTicketTree.clear();
             trainTree.clear();
-            FILE *fp = fopen("tmp/id.dat", "w+");
+            FILE *fp = fopen("id.dat", "w+");
             fprintf(fp, "2018\n1\n");
             fclose(fp);
             nowId = 2018;
