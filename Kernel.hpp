@@ -14,7 +14,7 @@
 #include "BPlusTree.hpp"
 #include "DateAndTime.h"
 #include "Vector.h"
-//#include "InternalData.h"
+#include "InternalData.h"
 using namespace myAlgorithm;
 
 namespace Kernel {
@@ -314,17 +314,16 @@ namespace Kernel {
 
     inline int trainStation2Short(const myAlgorithm::String &station) {
         int l = 0, r = 2714, ansx = 0;
-        /*while(l <= r) {
+        while(l <= r) {
             int mid = (l + r) >> 1;
             if(InternalData::InternalStation[mid] >= station) r = mid - 1, ansx = mid;
             else l = mid + 1;
-        }*/
+        }
         return ansx;
     }
 
     inline myAlgorithm::String short2trainStation(const short &idx) {
-        //return InternalData::InternalStation[idx];
-        return "";
+        return InternalData::InternalStation[idx];
     }
 
     void _init() {
