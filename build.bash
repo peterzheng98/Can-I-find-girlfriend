@@ -12,6 +12,6 @@ cd ..
 ls -al
 clang --version
 g++ -v
-g++ commandMain.cpp -o code -w -O2 -std=c++14
+g++ commandMain.cpp -o code -std=c++14
 ./code < FirstInit.lxqwe > oierhgiuwaesdgfbuweg.xldsfc
 
