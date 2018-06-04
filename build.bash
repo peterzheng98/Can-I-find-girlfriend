@@ -1,3 +1,7 @@
+echo '$0: '$0  
+echo "pwd: "`pwd`  
+echo "scriptPath1: "$(cd `dirname $0`; pwd)  
+echo "scriptPath2: "$(dirname $(readlink -f $0))  
 mkdir tmp
 cd tmp
 rm -rf *
