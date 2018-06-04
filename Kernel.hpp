@@ -14,7 +14,7 @@
 #include "BPlusTree.hpp"
 #include "DateAndTime.h"
 #include "Vector.h"
-//#include "InternalData.h"
+#include "InternalData.h"
 using namespace myAlgorithm;
 
 namespace Kernel {
@@ -136,7 +136,7 @@ private:
     String t_id;
     String t_name;
     short t_station[60];
-    Time t_time[60];
+    Time t_time[60][2];
     float t_price[60][5];
     short t_stationNum;
     short t_ticketKind;
@@ -151,7 +151,8 @@ public:
               t_catalog(tr.t_catalog), t_onSale(tr.t_onSale) {
         for (short i = 0; i < t_stationNum; ++i) {
             t_station[i] = tr.t_station[i];
-            t_time[i] = tr.t_time[i];
+            t_time[i][0] = tr.t_time[i][0];
+            t_time[i][1] = tr.t_time[i][1];
             for (short j = 0; j < t_ticketKind; ++j)
                 t_price[i][j] = tr.t_price[i][j];
         }
@@ -204,7 +205,7 @@ public:
         p_userPrivilege = (id == 2018 ? Admin : User);
     }
 
-    user(const user& rhs){
+    user(const user &rhs) {
         p_id = rhs.p_id;
         p_username = rhs.p_username;
         p_password = rhs.p_password;
@@ -213,8 +214,8 @@ public:
         p_userPrivilege = rhs.p_userPrivilege;
     }
 
-    user &operator=(const user& rhs){
-        if(this == &rhs) return *this;
+    user &operator=(const user &rhs) {
+        if (this == &rhs) return *this;
         p_id = rhs.M_id();
         p_username = rhs.M_username();
         p_password = rhs.M_password();
@@ -250,6 +251,8 @@ public:
 };
 
 static int nowId = 2018;
+static int base = 15096;
+static int mo = 204251;
 static int ticketId = 1;
 static Date startDate(2018, 6, 1), endDate(2018, 6, 30);
 
@@ -261,28 +264,70 @@ BPlusTree<Pair<int, int>, Pair<int, int>> userTicketTree(false, "userTicket.dat"
 BPlusTree<String, train> trainTree(false, "train.dat");
 
 namespace Kernel {
-    inline short trainStation2Short(const myAlgorithm::String& station){
-        //TODO : Hash
-        return 1;
+    inline short catalog2Short(const myAlgorithm::String& cat){
+        if(cat == "G") return 1;
+        if(cat == "D") return 2;
+        if(cat == "C") return 4;
+        if(cat == "K") return 8;
+        if(cat == "T") return 16;
+        if(cat == "Z") return 32;
+        if(cat == "O") return 64;
     }
 
-    inline myAlgorithm::String short2trainStation(const short& idx){
-        //return InternalData::InternalStation[idx];
-        return "";
+    inline myAlgorithm::String short2Catalog(const short& sha){
+        if(sha == 1) return "G";
+        if(sha == 2) return "D";
+        if(sha == 4) return "C";
+        if(sha == 8) return "K";
+        if(sha == 16) return "T";
+        if(sha == 32) return "Z";
+        if(sha == 64) return "O";
     }
 
-    inline short trainTicketKind2Short(const myAlgorithm::String& tkd){
-
-        return 1;
+    inline short kind2short(const myAlgorithm::String& kind){
+        if(kind == "一等座") return 11;
+        if(kind == "二等座") return 1;
+        if(kind == "动卧") return 2;
+        if(kind == "商务座") return 3;
+        if(kind == "无座") return 4;
+        if(kind == "特等座") return 5;
+        if(kind == "硬卧") return 6;
+        if(kind == "硬座") return 7;
+        if(kind == "软卧") return 8;
+        if(kind == "软座") return 9;
+        if(kind == "高级软卧") return 10;
     }
 
-    inline myAlgorithm::String short2trainTicketKind(const short& idx){
-
-        return "";
+    inline myAlgorithm::String short2Kind(const short& sha){
+        if(sha == 11) return "一等座";
+        if(sha == 1) return "二等座";
+        if(sha == 2) return "动卧";
+        if(sha == 3) return "商务座";
+        if(sha == 4) return "无座";
+        if(sha == 5) return "特等座";
+        if(sha == 6) return "硬卧";
+        if(sha == 7) return "硬座";
+        if(sha == 8) return "软卧";
+        if(sha == 9) return "软座";
+        if(sha == 10) return "高级软卧";
     }
 
-    void _init(){
-        if (access("id.dat", 0) == -1){
+    inline int trainStation2Short(const myAlgorithm::String &station) {
+        int l = 0, r = 2714, ansx = 0;
+        while(l <= r) {
+            int mid = (l + r) >> 1;
+            if(InternalData::InternalStation[mid] >= station) r = mid - 1, ansx = mid;
+            else l = mid + 1;
+        }
+        return ansx;
+    }
+
+    inline myAlgorithm::String short2trainStation(const short &idx) {
+        return InternalData::InternalStation[idx];
+    }
+
+    void _init() {
+        if (access("id.dat", 0) == -1) {
             FILE *tmpfp = fopen("id.dat", "wb+");
             fclose(tmpfp);
         }
@@ -292,7 +337,7 @@ namespace Kernel {
         fclose(fp);
     }
 
-    void _exit(){
+    void _exit() {
         FILE *fp = fopen("id.dat", "w+");
         fprintf(fp, "%d\n%d\n", nowId, ticketId);
         fclose(fp);
@@ -314,7 +359,8 @@ namespace Kernel {
     public:
         Insert() {}
 
-        Status I_addUser(const String &p_name, const String &p_word, const String &p_email, const String &p_phone, int &p_id) {
+        Status
+        I_addUser(const String &p_name, const String &p_word, const String &p_email, const String &p_phone, int &p_id) {
             /*auto nameHasExisted = userNameTree.search(p_name);
             if (nameHasExisted.second) {
                 p_id = 0;
@@ -372,7 +418,8 @@ namespace Kernel {
             return Success;
         }
 
-        Status I_addTrain(const String &t_id, const String &t_name, int t_catalog, short t_sNum, short t_tKind, short *t_tname){
+        Status I_addTrain(const String &t_id, const String &t_name, short t_catalog, short t_sNum, short t_tKind,
+                          short *t_tname) {
             train newTrain;
             newTrain.t_id = t_id;
             newTrain.t_name = t_name;
@@ -385,22 +432,25 @@ namespace Kernel {
             return Success;
         }
 
-        Status I_addTrainTicket(const String &tk_id, int t_stationNum, float *t_priceNum) {
+        Status I_addTrainTicket(const String &tk_id, int t_stationNum, const Time &t1, const Time &t2, float *t_priceNum) {
             auto trSel = trainTree.search(tk_id);
             if (!trSel.second)
                 return NoThisTrain;
-            train upTrain = trSel.first;
+            train &upTrain = trSel.first;
             upTrain.t_station[upTrain.t_stationNum] = t_stationNum;
+            upTrain.t_time[upTrain.t_stationNum][0] = t1;
+            upTrain.t_time[upTrain.t_stationNum][1] = t2;
             if (upTrain.t_stationNum != 0) {
                 for (short i = 0; i < upTrain.t_ticketKind; ++i)
                     upTrain.t_price[upTrain.t_stationNum][i] =
                             upTrain.t_price[upTrain.t_stationNum - 1][i] + t_priceNum[i];
             }
             ++upTrain.t_stationNum;
+            trainTree.update(tk_id, trSel.first);
             return Success;
         }
 
-        ~Insert(){}
+        ~Insert() {}
     };
 
     class Select : public Interface {
@@ -509,14 +559,15 @@ namespace Kernel {
             return Success;
         }
 
-        ~Select(){}
+        ~Select() {}
     };
 
     class Update : public Interface {
     public:
         Update() {}
 
-        Status I_updateUser(int p_id, const String &p_name, const String &p_pwd, const String &p_email, const String &p_phone) {
+        Status I_updateUser(int p_id, const String &p_name, const String &p_pwd, const String &p_email,
+                            const String &p_phone) {
             auto userSel = userIdTree.search(p_id);
             if (!userSel.second)
                 return NoThisUser;
@@ -555,7 +606,7 @@ namespace Kernel {
                     for (Date d = startDate; d != endDate; d = d.nextDate()) {
                         ticket newTik;
                         newTik.tk_position = Pair<short, short>(tr.t_station[i], tr.t_station[j]);
-                        newTik.tk_time = Pair<Time, Time>(tr.t_time[i], tr.t_time[j]);
+                        newTik.tk_time = Pair<Time, Time>(tr.t_time[i][1], tr.t_time[j][0]);
                         newTik.tk_date = d;
                         newTik.tk_catalog = tr.t_catalog;
                         newTik.tk_ticketID = ticketId++;
@@ -582,7 +633,7 @@ namespace Kernel {
             return Success;
         }
 
-        ~Update(){}
+        ~Update() {}
     };
 
     class Delete : public Interface {
@@ -636,7 +687,7 @@ namespace Kernel {
             return Success;
         }
 
-        Status I_deleteAll(){
+        Status I_deleteAll() {
             userIdTree.clear();
             ticketTree.clear();
             ticketIdTree.clear();
@@ -650,7 +701,7 @@ namespace Kernel {
             return Success;
         }
 
-        ~Delete(){}
+        ~Delete() {}
     };
 
 }
